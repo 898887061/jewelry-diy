@@ -2,6 +2,8 @@ import { setRequestLocale } from "next-intl/server";
 import { loadBeads } from "@/lib/load-beads";
 import { ProductsClient } from "@/components/products/ProductsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductsPage({
   params,
 }: {
