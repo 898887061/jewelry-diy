@@ -11,6 +11,8 @@
     "profile": "我的"
   },
   "home": {
+    "banner": "手链最低尺寸 7cm 起购，开始定制你的专属手串！",
+    "bannerBadge": "最低 7cm",
     "eyebrow": "JEWELRY STUDIO",
     "title": "珠宝定制",
     "tagline": "从灵感到成品，定制一条真正属于你的手串。",
@@ -49,7 +51,7 @@
     "fitTight": "手围 偏紧",
     "fitTooSmall": "手围 过小",
     "totalPrice": "总价格: {price}",
-    "hint": "长按拖出手圈可删除 · 拖动可排序 · 已选 {count}/{max}",
+    "hint": "长按拖出手圈可删除 · 拖动可排序 · 已用 {used}mm/{max}mm",
     "clear": "清空",
     "clearAriaLabel": "清空设计",
     "save": "保存",
@@ -85,6 +87,7 @@
     "其他": "其他"
   },
   "handSize": {
+    "7cm": "手围 7cm",
     "14cm": "手围 14cm",
     "15cm": "手围 15cm",
     "16cm": "手围 16cm",
@@ -161,6 +164,31 @@
   "cart": {
     "empty": "购物车为空，无法结账",
     "failed": "创建 Shopify 购物车失败"
+  },
+  "orderPreview": {
+    "title": "独一无二的定制",
+    "wristSize": "手围",
+    "wristSizeUnit": "厘米(cm)为单位，代表手腕环绕一周的长度",
+    "checkWrist": "检查手围",
+    "materialDetail": "定制明细",
+    "colMaterial": "材料",
+    "colUnitPrice": "单价",
+    "colSize": "尺寸",
+    "colQty": "数量",
+    "colSubtotal": "金额",
+    "costSummary": "费用明细",
+    "subtotal": "商品小计",
+    "shipping": "运费",
+    "freeShipping": "（包邮）0.0",
+    "total": "合计",
+    "checkoutBtn": "立即购买",
+    "redirecting": "正在跳转...",
+    "purchaseNotes": "购前须知",
+    "noteWrist": "下单前请务必确认自己手围正确，不清楚自己手围可以联系客服协助",
+    "noteTime": "设计制作约耗时2-3天(非节假日)，详细制作时长可以询问客服",
+    "noteConfirm": "支付后请同意小程序的制作完成通知，可以在小程序查看实物图，确认后发货，拒绝通知将默认自动发货",
+    "noteReturn": "定制商品非制作&质量问题不退不换",
+    "noteShipping": "默认中通快递，发货后运费部分不予退款"
   },
   "language": {
     "en": "English",

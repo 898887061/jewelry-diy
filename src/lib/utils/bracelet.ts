@@ -16,9 +16,10 @@ export function getBraceletPositions(
   cx: number,
   cy: number,
   radius: number,
+  rotationOffset = 0,
 ): PositionedBead[] {
   return beads.map((bead, index) => {
-    const angle = (index / Math.max(beads.length, 1)) * 2 * Math.PI - Math.PI / 2;
+    const angle = (index / Math.max(beads.length, 1)) * 2 * Math.PI - Math.PI / 2 + rotationOffset;
 
     return {
       ...bead,
@@ -35,9 +36,10 @@ export function getEmptySlots(
   cx: number,
   cy: number,
   radius: number,
+  rotationOffset = 0,
 ): Point[] {
   return Array.from({ length: Math.max(0, maxBeads - selectedCount) }, (_, i) => {
-    const angle = ((selectedCount + i) / maxBeads) * 2 * Math.PI - Math.PI / 2;
+    const angle = ((selectedCount + i) / maxBeads) * 2 * Math.PI - Math.PI / 2 + rotationOffset;
 
     return {
       x: cx + radius * Math.cos(angle),

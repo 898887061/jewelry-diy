@@ -11,10 +11,11 @@ import type {
 } from "@/lib/shopify/types";
 
 const HAND_SIZE_PRESETS = [
-  { key: "14cm", maxBeads: 16 },
-  { key: "15cm", maxBeads: 17 },
-  { key: "16cm", maxBeads: 18 },
-  { key: "17cm", maxBeads: 20 },
+  { key: "7cm", circumferenceMm: 70 },
+  { key: "14cm", circumferenceMm: 140 },
+  { key: "15cm", circumferenceMm: 150 },
+  { key: "16cm", circumferenceMm: 160 },
+  { key: "17cm", circumferenceMm: 170 },
 ] as const;
 
 export type HandSizePreset = (typeof HAND_SIZE_PRESETS)[number];
@@ -41,7 +42,7 @@ export function useBraceletState(beads: Bead[]) {
   const [selectedBeads, setSelectedBeads] = useState<SelectedBead[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<"全部" | BeadCategory>("全部");
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [handSize, setHandSize] = useState<HandSizePreset>(HAND_SIZE_PRESETS[2]);
+  const [handSize, setHandSize] = useState<HandSizePreset>(HAND_SIZE_PRESETS[3]);
 
   const beadOptions = useMemo(() => toBeadOptions(beads), [beads]);
 
@@ -81,12 +82,30 @@ export function useBraceletState(beads: Bead[]) {
     [selectedBeads],
   );
 
-  const maxBeads = handSize.maxBeads;
+  const maxCircumferenceMm = handSize.circumferenceMm;
 
-  const isFull = selectedBeads.length >= maxBeads;
+  const usedCircumferenceMm = useMemo(
+    () => selectedBeads.reduce((sum, bead) => sum + bead.sizeMm, 0),
+    [selectedBeads],
+  );
+
+  const remainingMm = maxCircumferenceMm - usedCircumferenceMm;
+
+  const minBeadSizeMm = useMemo(() => {
+    const sizes = beadOptions.map((o) => o.sizeMm).filter((s) => s > 0);
+    return sizes.length > 0 ? Math.min(...sizes) : 6;
+  }, [beadOptions]);
+
+  const isFull = remainingMm < minBeadSizeMm;
+
+  const estimatedMaxBeads = Math.max(
+    selectedBeads.length,
+    Math.floor(maxCircumferenceMm / (minBeadSizeMm || 8)),
+  );
 
   function addBead(option: BeadOption) {
-    if (isFull || !option.availableForSale) return;
+    if (!option.availableForSale) return;
+    if (usedCircumferenceMm + option.sizeMm > maxCircumferenceMm) return;
 
     setSelectedBeads((prev) => [
       ...prev,
@@ -104,18 +123,22 @@ export function useBraceletState(beads: Bead[]) {
         return;
       }
 
-      const next = variantIds
-        .slice(0, maxBeads)
-        .map((variantId) => optionByVariantId[variantId])
-        .filter((option): option is BeadOption => Boolean(option) && option.availableForSale)
-        .map((option) => ({
+      const next: SelectedBead[] = [];
+      let used = 0;
+      for (const variantId of variantIds) {
+        const option = optionByVariantId[variantId];
+        if (!option || !option.availableForSale) continue;
+        if (used + option.sizeMm > maxCircumferenceMm) break;
+        used += option.sizeMm;
+        next.push({
           ...option,
           instanceId: `${option.variantId}-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
-        }));
+        });
+      }
 
       setSelectedBeads(next);
     },
-    [maxBeads, optionByVariantId],
+    [maxCircumferenceMm, optionByVariantId],
   );
 
   function removeBead(index: number) {
@@ -165,6 +188,7 @@ export function useBraceletState(beads: Bead[]) {
       { key: "bead_sequence", value: beadSequence || "" },
       { key: "bead_count", value: String(selectedBeads.length) },
       { key: "bracelet_size", value: handSize.key },
+      { key: "used_circumference_mm", value: String(usedCircumferenceMm) },
       { key: "design_total", value: totalPrice.toFixed(2) },
     ];
   }
@@ -181,7 +205,10 @@ export function useBraceletState(beads: Bead[]) {
     filteredOptions,
     selectedBeads,
     totalPrice,
-    maxBeads,
+    maxCircumferenceMm,
+    usedCircumferenceMm,
+    remainingMm,
+    estimatedMaxBeads,
     isFull,
     addBead,
     removeBead,

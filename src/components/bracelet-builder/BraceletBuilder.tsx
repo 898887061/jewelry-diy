@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { BeadCatalogGrid } from "@/components/bracelet-builder/BeadCatalogGrid";
 import { BraceletCanvas } from "@/components/bracelet-builder/BraceletCanvas";
+import { OrderPreview } from "@/components/bracelet-builder/OrderPreview";
 import { useBraceletState } from "@/components/bracelet-builder/hooks/useBraceletState";
 import { useShopifyCart } from "@/components/bracelet-builder/hooks/useShopifyCart";
 import { BottomTabBar } from "@/components/layout/BottomTabBar";
@@ -31,7 +32,10 @@ export function BraceletBuilder({ beads }: BraceletBuilderProps) {
     filteredOptions,
     selectedBeads,
     totalPrice,
-    maxBeads,
+    maxCircumferenceMm,
+    usedCircumferenceMm,
+    remainingMm,
+    estimatedMaxBeads,
     isFull,
     addBead,
     removeBead,
@@ -45,12 +49,14 @@ export function BraceletBuilder({ beads }: BraceletBuilderProps) {
   const { createCartAndGoCheckout, isLoading, error } = useShopifyCart();
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [showOrderPreview, setShowOrderPreview] = useState(false);
 
   const headerStatus = useMemo(() => {
-    if (selectedBeads.length < maxBeads - 2) return t("fitPerfect");
-    if (selectedBeads.length < maxBeads) return t("fitTight");
+    const fillRatio = usedCircumferenceMm / maxCircumferenceMm;
+    if (fillRatio < 0.8) return t("fitPerfect");
+    if (fillRatio < 0.95) return t("fitTight");
     return t("fitTooSmall");
-  }, [maxBeads, selectedBeads.length, t]);
+  }, [maxCircumferenceMm, usedCircumferenceMm, t]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -172,14 +178,14 @@ export function BraceletBuilder({ beads }: BraceletBuilderProps) {
         <section className="shrink-0 rounded-[20px] border border-[#E2E5EB] bg-[#F7F8FA] p-2">
           <BraceletCanvas
             beads={selectedBeads}
-            maxBeads={maxBeads}
+            maxBeads={estimatedMaxBeads}
             totalPrice={totalPrice}
             onRemove={removeBead}
             onMoveTo={moveBeadTo}
           />
 
           <div className="mt-1.5 text-center text-[12px] text-[#7B8291]">
-            {t("hint", { count: selectedBeads.length, max: maxBeads })}
+            {t("hint", { used: usedCircumferenceMm, max: maxCircumferenceMm })}
           </div>
         </section>
 
@@ -218,8 +224,8 @@ export function BraceletBuilder({ beads }: BraceletBuilderProps) {
 
           <button
             type="button"
-            onClick={handleCheckout}
-            disabled={selectedBeads.length === 0 || isLoading}
+            onClick={() => setShowOrderPreview(true)}
+            disabled={selectedBeads.length === 0}
             className="rounded-[14px] border border-[#313744] bg-white px-4 py-3 text-[20px] leading-none text-[#212733] disabled:cursor-not-allowed disabled:opacity-50"
             aria-label={t("checkoutAriaLabel")}
           >
@@ -228,11 +234,11 @@ export function BraceletBuilder({ beads }: BraceletBuilderProps) {
 
           <button
             type="button"
-            onClick={handleCheckout}
-            disabled={selectedBeads.length === 0 || isLoading}
+            onClick={() => setShowOrderPreview(true)}
+            disabled={selectedBeads.length === 0}
             className="flex-1 rounded-[14px] border border-[#343A46] bg-white px-4 py-3 text-right text-[18px] font-semibold text-[#2B313D] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLoading ? t("redirecting") : t("completeCheckout", { price: formatCnyCompact(totalPrice) })}
+            {t("completeCheckout", { price: formatCnyCompact(totalPrice) })}
           </button>
         </div>
 
@@ -250,6 +256,17 @@ export function BraceletBuilder({ beads }: BraceletBuilderProps) {
       </div>
 
       <BottomTabBar />
+
+      {showOrderPreview && (
+        <OrderPreview
+          beads={selectedBeads}
+          wristSizeCm={handSize.key}
+          totalPrice={totalPrice}
+          isLoading={isLoading}
+          onCheckout={handleCheckout}
+          onClose={() => setShowOrderPreview(false)}
+        />
+      )}
     </div>
   );
 }

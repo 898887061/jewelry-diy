@@ -11,6 +11,8 @@
     "profile": "Me"
   },
   "home": {
+    "banner": "Bracelet minimum size: 7cm — Start your custom design today!",
+    "bannerBadge": "MIN 7cm",
     "eyebrow": "JEWELRY STUDIO",
     "title": "Jewelry DIY",
     "tagline": "From inspiration to finished piece — craft the bracelet that's truly yours.",
@@ -49,7 +51,7 @@
     "fitTight": "Snug",
     "fitTooSmall": "Too small",
     "totalPrice": "Total: {price}",
-    "hint": "Long-press to drag out to remove · drag to reorder · selected {count}/{max}",
+    "hint": "Long-press to drag out to remove · drag to reorder · {used}mm/{max}mm",
     "clear": "Clear",
     "clearAriaLabel": "Clear design",
     "save": "Save",
@@ -85,6 +87,7 @@
     "其他": "Other"
   },
   "handSize": {
+    "7cm": "Wrist 7cm",
     "14cm": "Wrist 14cm",
     "15cm": "Wrist 15cm",
     "16cm": "Wrist 16cm",
@@ -161,6 +164,31 @@
   "cart": {
     "empty": "Cart is empty. Cannot check out.",
     "failed": "Failed to create Shopify cart"
+  },
+  "orderPreview": {
+    "title": "One-of-a-Kind Custom",
+    "wristSize": "Wrist Size",
+    "wristSizeUnit": "cm (circumference around wrist)",
+    "checkWrist": "Check Wrist",
+    "materialDetail": "Material Detail",
+    "colMaterial": "Material",
+    "colUnitPrice": "Unit Price",
+    "colSize": "Size",
+    "colQty": "Qty",
+    "colSubtotal": "Subtotal",
+    "costSummary": "Cost Summary",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "freeShipping": "Free",
+    "total": "Total",
+    "checkoutBtn": "Checkout to Shopify",
+    "redirecting": "Redirecting...",
+    "purchaseNotes": "Purchase Notes",
+    "noteWrist": "Please confirm your wrist size before ordering. Contact support if unsure.",
+    "noteTime": "Custom designs take 2-3 business days to craft.",
+    "noteConfirm": "After payment, confirm the design in the app before shipping.",
+    "noteReturn": "Custom items are non-refundable unless defective.",
+    "noteShipping": "Default shipping via standard courier. Shipping fees not refunded after dispatch."
   },
   "language": {
     "en": "English",

@@ -65,6 +65,16 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-0 opacity-60 [background:radial-gradient(circle_at_14%_0%,#ffffff_0%,transparent_35%),radial-gradient(circle_at_100%_100%,#ebeef4_0%,transparent_28%)]" />
 
       <div className="relative px-4">
+        {/* Promotional banner */}
+        <div className="mb-4 flex items-center gap-2.5 rounded-full border border-[#F0D1D3] bg-gradient-to-r from-[#FFF0F0] to-[#FFF7F2] px-4 py-2.5 shadow-[0_2px_8px_rgba(212,45,52,0.08)]">
+          <span className="shrink-0 rounded-full bg-[#D42D34] px-2.5 py-1 text-[11px] font-bold tracking-wide text-white">
+            {t("bannerBadge")}
+          </span>
+          <p className="min-w-0 flex-1 text-[12px] leading-tight text-[#6B4446]">
+            {t("banner")}
+          </p>
+        </div>
+
         <header className="mb-5">
           <p className="mb-2 text-[11px] tracking-[0.28em] text-[#8A91A0]">{t("eyebrow")}</p>
           <h1 className="text-[38px] leading-none tracking-[0.04em] text-[#1A202C] [font-family:var(--font-display)]">

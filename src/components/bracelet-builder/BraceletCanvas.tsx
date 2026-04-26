@@ -30,8 +30,13 @@ export function BraceletCanvas({
   const radius = 102;
   const deleteThreshold = radius * DELETE_THRESHOLD_RATIO;
 
-  const positions = getBraceletPositions(beads, cx, cy, radius);
-  const emptySlots = getEmptySlots(beads.length, maxBeads, cx, cy, radius);
+  const [rotationOffset, setRotationOffset] = useState(0);
+  const [isRotating, setIsRotating] = useState(false);
+  const rotateStartAngleRef = useRef(0);
+  const rotateStartOffsetRef = useRef(0);
+
+  const positions = getBraceletPositions(beads, cx, cy, radius, rotationOffset);
+  const emptySlots = getEmptySlots(beads.length, maxBeads, cx, cy, radius, rotationOffset);
 
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -172,6 +177,35 @@ export function BraceletCanvas({
     setDragPos(null);
     setIsInDeleteZone(false);
     setHoverIndex(null);
+    setIsRotating(false);
+  }
+
+  function handleBgPointerDown(clientX: number, clientY: number) {
+    if (draggingIndex !== null) return;
+    const point = pointerToSvgPoint(clientX, clientY);
+    if (!point) return;
+
+    const distFromCenter = Math.hypot(point.x - cx, point.y - cy);
+    if (distFromCenter < radius * 0.5 || distFromCenter > radius * 1.6) return;
+
+    const angle = Math.atan2(point.y - cy, point.x - cx);
+    rotateStartAngleRef.current = angle;
+    rotateStartOffsetRef.current = rotationOffset;
+    setIsRotating(true);
+  }
+
+  function handleBgPointerMove(clientX: number, clientY: number) {
+    if (!isRotating) return;
+    const point = pointerToSvgPoint(clientX, clientY);
+    if (!point) return;
+
+    const angle = Math.atan2(point.y - cy, point.x - cx);
+    const delta = angle - rotateStartAngleRef.current;
+    setRotationOffset(rotateStartOffsetRef.current + delta);
+  }
+
+  function handleBgPointerUp() {
+    setIsRotating(false);
   }
 
   function handleAnimationEnd(instanceId: string) {
@@ -190,8 +224,25 @@ export function BraceletCanvas({
         className="mx-auto w-full max-w-[320px] touch-none select-none"
         role="img"
         aria-label={t("previewAria", { count: beads.length, max: maxBeads })}
-        onPointerMove={(event) => handlePointerMove(event.clientX, event.clientY)}
-        onPointerUp={handlePointerUp}
+        onPointerDown={(event) => {
+          if (draggingIndex === null) {
+            handleBgPointerDown(event.clientX, event.clientY);
+          }
+        }}
+        onPointerMove={(event) => {
+          if (isRotating) {
+            handleBgPointerMove(event.clientX, event.clientY);
+          } else {
+            handlePointerMove(event.clientX, event.clientY);
+          }
+        }}
+        onPointerUp={(event) => {
+          if (isRotating) {
+            handleBgPointerUp();
+          } else {
+            handlePointerUp();
+          }
+        }}
         onPointerCancel={handlePointerCancel}
       >
         <defs>
@@ -202,6 +253,21 @@ export function BraceletCanvas({
           <filter id="bead-shadow" x="-40%" y="-40%" width="180%" height="180%">
             <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#3F434A" floodOpacity="0.2" />
           </filter>
+          {/* Per-bead crystal gradients */}
+          {beads.map((bead) => (
+            <radialGradient
+              key={`grad-${bead.instanceId}`}
+              id={`bead-grad-${bead.instanceId}`}
+              cx="35%"
+              cy="30%"
+              r="65%"
+            >
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+              <stop offset="35%" stopColor={bead.colorHex} stopOpacity="0.8" />
+              <stop offset="70%" stopColor={bead.colorHex} />
+              <stop offset="100%" stopColor={`color-mix(in srgb, ${bead.colorHex} 60%, #3a3f4a)`} />
+            </radialGradient>
+          ))}
         </defs>
 
         {/* Bracelet ring */}
@@ -259,15 +325,18 @@ export function BraceletCanvas({
 
         {/* Bead positions */}
         {positions.map((bead, index) => {
-          const radiusPx = Math.max(8, Math.min(15, bead.sizeMm * 1.1));
+          const radiusPx = Math.max(7, Math.min(16, bead.sizeMm * 1.2));
           const isDragging = draggingIndex === index;
           const isDropTarget = hoverIndex === index && draggingIndex !== null && !isInDeleteZone;
           const isNew = newBeadIds.has(bead.instanceId);
           const isRemoving = removingIndex === index;
 
-          // If dragging this bead, render at drag position
           const renderX = isDragging && dragPos ? dragPos.x : bead.x;
           const renderY = isDragging && dragPos ? dragPos.y : bead.y;
+
+          const fillColor = isDragging && isInDeleteZone
+            ? "#E53E3E"
+            : `url(#bead-grad-${bead.instanceId})`;
 
           return (
             <g
@@ -323,15 +392,27 @@ export function BraceletCanvas({
                 fill="rgba(63,67,74,0.15)"
                 opacity={isDragging ? 0.5 : 1}
               />
-              {/* Main bead */}
+              {/* Main bead with crystal gradient */}
               <circle
                 cx={renderX}
                 cy={renderY}
                 r={radiusPx}
-                fill={isDragging && isInDeleteZone ? "#E53E3E" : bead.colorHex}
+                fill={fillColor}
+                stroke={`color-mix(in srgb, ${bead.colorHex} 70%, #ffffff)`}
+                strokeWidth="0.5"
                 filter="url(#bead-shadow)"
                 opacity={isDragging ? 0.85 : isRemoving ? 0.5 : 1}
                 style={{ transition: "fill 0.15s" }}
+              />
+              {/* Crystal inner glow */}
+              <circle
+                cx={renderX - radiusPx * 0.12}
+                cy={renderY - radiusPx * 0.12}
+                r={radiusPx * 0.55}
+                fill="none"
+                stroke="rgba(255,255,255,0.15)"
+                strokeWidth="0.8"
+                opacity={isDragging ? 0.3 : 0.7}
               />
               {/* Shine highlight */}
               <ellipse
@@ -339,7 +420,7 @@ export function BraceletCanvas({
                 cy={renderY - radiusPx * 0.28}
                 rx={radiusPx * 0.34}
                 ry={radiusPx * 0.28}
-                fill="rgba(255,255,255,0.6)"
+                fill="rgba(255,255,255,0.7)"
                 opacity={isDragging ? 0.4 : 1}
               />
               {/* Equator shine */}
@@ -349,53 +430,52 @@ export function BraceletCanvas({
                 width={radiusPx * 1.3}
                 height={radiusPx * 0.15}
                 rx={radiusPx * 0.06}
-                fill="rgba(255,255,255,0.4)"
+                fill="rgba(255,255,255,0.35)"
                 transform={`rotate(-7 ${renderX} ${renderY})`}
                 opacity={isDragging ? 0.35 : 1}
+              />
+              {/* Bottom reflection */}
+              <ellipse
+                cx={renderX + radiusPx * 0.1}
+                cy={renderY + radiusPx * 0.35}
+                rx={radiusPx * 0.25}
+                ry={radiusPx * 0.15}
+                fill="rgba(255,255,255,0.2)"
+                opacity={isDragging ? 0.2 : 0.6}
               />
             </g>
           );
         })}
 
-        {/* Center text */}
+        {/* Center lilpeb logo */}
+        <text
+          x={cx}
+          y={cy - 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          className="fill-[#B8BCC6] text-[18px] tracking-[0.16em]"
+          style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+        >
+          lilpeb
+        </text>
         {beads.length === 0 ? (
-          <>
-            <text
-              x={cx}
-              y={cy - 8}
-              textAnchor="middle"
-              className="fill-[#B0B6C2] text-[14px] font-medium"
-            >
-              {t("addBeads")}
-            </text>
-            <text
-              x={cx}
-              y={cy + 10}
-              textAnchor="middle"
-              className="fill-[#C5CAD4] text-[11px]"
-            >
-              {t("startDesign")}
-            </text>
-          </>
+          <text
+            x={cx}
+            y={cy + 18}
+            textAnchor="middle"
+            className="fill-[#C5CAD4] text-[11px]"
+          >
+            {t("startDesign")}
+          </text>
         ) : (
-          <>
-            <text
-              x={cx}
-              y={cy - 10}
-              textAnchor="middle"
-              className="fill-[#8B92A0] text-[12px]"
-            >
-              {t("countUnit", { count: beads.length, max: maxBeads })}
-            </text>
-            <text
-              x={cx}
-              y={cy + 10}
-              textAnchor="middle"
-              className="fill-[#6A707E] text-[16px] font-semibold"
-            >
-              {formatCny(totalPrice)}
-            </text>
-          </>
+          <text
+            x={cx}
+            y={cy + 18}
+            textAnchor="middle"
+            className="fill-[#A0A7B4] text-[10px]"
+          >
+            {beads.length} beads · {formatCny(totalPrice)}
+          </text>
         )}
       </svg>
     </div>
